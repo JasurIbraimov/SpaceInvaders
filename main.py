@@ -7,6 +7,7 @@ from button import Button
 from player import Player
 from enemy import Enemy
 from utils import *
+from explosion import Explosion
 
 class Game(arcade.Window):
     def __init__(self, title):
@@ -59,6 +60,7 @@ class Game(arcade.Window):
         self.lives = arcade.SpriteList()
         self.lasers = arcade.SpriteList()
         self.enemies = arcade.SpriteList()
+        self.explosions = arcade.SpriteList()
         self.setup_colors()
         self.setup_shapes()
         self.setup_enemies()
@@ -134,6 +136,7 @@ class Game(arcade.Window):
         else:
             self.player.draw()
             self.enemies.draw()
+            self.explosions.draw()
             self.lasers.draw()
             self.lives.draw()
 
@@ -158,6 +161,13 @@ class Game(arcade.Window):
             return 
         self.lasers.update()
         self.enemies.update()
+
+        self.explosions.update_animation()
+        for enemy in self.enemies:
+            if enemy.hp <= 0:
+                explosion =  Explosion(enemy.center_x, enemy.center_y)
+                self.explosions.append(explosion)
+                enemy.kill()
 
     def on_mouse_motion(self, x, y, dx, dy):
         # To make cursor move with user mouse
@@ -231,7 +241,19 @@ class Game(arcade.Window):
             else: 
                 self.player.shooting(self)
         
-        
+    def on_key_press(self, symbol: int, modifiers: int):
+        if symbol == arcade.key.NUM_1:
+            self.player.shoot_mode = 1
+        elif symbol == arcade.key.NUM_2:
+            self.player.shoot_mode = 2
+        elif symbol == arcade.key.NUM_3:
+            self.player.shoot_mode = 3
+        if symbol == arcade.key.C:
+            self.player.laser_type = "common"
+        if symbol == arcade.key.P:
+            self.player.laser_type = "penetrate"
+        if symbol == arcade.key.R:
+            self.player.laser_type = "ricochet"
     
 window = Game(SCREEN_TITLE)
 arcade.run()

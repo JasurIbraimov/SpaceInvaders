@@ -1,6 +1,5 @@
 from arcade import Sprite 
 
-
 class Enemy(Sprite):
     def __init__(self, hp):
         super().__init__("assets/Enemies/enemyRed1.png", 1)
@@ -10,5 +9,4 @@ class Enemy(Sprite):
         self.center_y-= self.change_y
         if self.top <= 0:
             self.kill()
-        if self.hp <= 0:
-            self.kill()
+
