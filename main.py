@@ -3,6 +3,7 @@ from constants import *
 from color import Color
 from shape import Shape
 from button import Button
+from player import Player
 
 class Game(arcade.Window):
     def __init__(self, title):
@@ -13,7 +14,10 @@ class Game(arcade.Window):
         
         # Loading Background textures 
         self.bg = arcade.load_texture("assets/Backgrounds/black.png") 
+
+        
         self.menu = True
+        self.player = None 
 
         # Loading Custom Font
         arcade.load_font("assets/Font/kenvector_future.ttf")
@@ -50,6 +54,7 @@ class Game(arcade.Window):
         # SpriteLists 
         self.colors = arcade.SpriteList()
         self.shapes = arcade.SpriteList()
+        self.lives = arcade.SpriteList()
         self.setup_colors()
         self.setup_shapes()
 
@@ -70,6 +75,16 @@ class Game(arcade.Window):
         self.colors.append(green)
         self.colors.append(red)
 
+    def setup_lives(self):
+        """
+            Method that creates lives of player, according to shape and color
+        """
+        for i in range(3):
+            live = arcade.Sprite(f"assets/Lives/player{self.chosen_shape}_{self.chosen_color}.png", 1)
+            live.set_position(200 + 60 * i, self.height - 50)
+            self.lives.append(live) 
+
+
     def setup_shapes(self):
         """
             Method that creates shapes on the screen, and places them
@@ -81,7 +96,6 @@ class Game(arcade.Window):
         self.shapes[0].scale = SHIP_CHOSEN_SCALE
 
     def on_draw(self):
-        
         # Drawing background of the game
         arcade.draw_texture_rectangle(
             self.width/2, 
@@ -97,7 +111,9 @@ class Game(arcade.Window):
             self.shape_text.draw()
             self.shapes.draw()
             self.choose_button.draw()
-
+        else:
+            self.player.draw()
+            self.lives.draw()
         # Drawing cursor
         self.cursor.draw()
 
@@ -145,7 +161,12 @@ class Game(arcade.Window):
                 
                 # Handle clicking to "Choose button"
                 if self.choose_button.left <= x <= self.choose_button.right  and self.choose_button.bottom <= y <= self.choose_button.top:
-                    self.menu = False
+                    self.menu = False # Turn off menu mode
+
+                    # Creating player according to user choice
+                    self.player = Player(f"assets/Player/player{self.chosen_shape}_{self.chosen_color}.png")
+                    self.player.set_position(self.width/2, 100)
+                    self.setup_lives()
                  
 window = Game(SCREEN_TITLE)
 arcade.run()
