@@ -1,4 +1,4 @@
-from arcade import Sprite, draw_rectangle_filled, draw_rectangle_outline
+from arcade import Sprite
 from random import randint, choice
 from time import time
 from laser import CommonLaser, RicochetLaser, HormingLaser
@@ -12,24 +12,29 @@ class Enemy(Sprite):
         self.shape_color = choice(colors) 
         super().__init__(f"assets/Enemies/enemy_{self.shape_color}{shape}.png", 1)
         self.window = window
-        self.center_x = randint(0 + self.width//2, self.window.width - self.width//2)
+        self.center_x = randint(0 + self.width//2, self.window.width - self.width//2 - 200) # set random position x
         self.change_y = C.ENEMY_SPEED
         self.hp = hp
-        
+
+    def change_hp(self, damage):
+        self.hp = self.hp - damage
+
     def update(self):
-        self.center_y-= self.change_y
+        self.center_y = self.center_y - self.change_y
         if self.top <= 0:
             self.kill()
 
 
 class ShootingEnemy(Enemy):
     def __init__(self, hp, window, laser_type, shooting_speed):
+        # select shape of enemy according to it's laser type
         if laser_type == "common": 
             shape = 2
         elif laser_type == "ricochet":
             shape = 3
         elif laser_type == "horming":
             shape = 4
+
         super().__init__(hp, window, shape, )
         self.shooting_time = time()
         self.laser_type = laser_type
@@ -38,7 +43,7 @@ class ShootingEnemy(Enemy):
     def update(self):
         super().update()
         if self.top <= self.window.height:
-            if time() - self.shooting_time >= self.shooting_speed: 
+            if time() - self.shooting_time >= self.shooting_speed:  # after shooting speed(second) shoot
                 self.shoot()
     
     def shoot(self):

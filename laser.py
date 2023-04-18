@@ -21,7 +21,7 @@ class Laser(Sprite):
         hits = check_for_collision_with_list(self, self.enemies)
         if len(hits) > 0:
             for enemy in hits: 
-                enemy.hp -= self.damage
+                enemy.change_hp(self.damage)
             return True 
     
     def check_boundary(self):

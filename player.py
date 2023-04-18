@@ -6,13 +6,17 @@ import constants as C
 class Player(AnimatedSprite):
     def __init__(self, hp, window, shape="Ship1", color="blue"):
         super().__init__(f"assets/Player/player{shape}_{color}.png", scale=0.8)
-        self.center_y = 100
+        self.center_y = 150
         self.shoot_mode = 3
         self.shape = shape 
         self.shape_color = color
         self.hp = hp
         self.laser_type = "common"
         self.window = window
+
+    def change_hp(self, damage):
+        self.hp = self.hp - damage
+        self.window.lives.pop()
  
     def change_shape(self):
         self.texture = load_texture(f"assets/Player/player{self.shape}_{self.shape_color}.png")
@@ -36,7 +40,11 @@ class Player(AnimatedSprite):
         elif self.laser_type == "ricochet":
             laser = RicochetLaser(**params, damage=C.RICHOCHET_LASER_DAMAGE, speed=C.RICHOCHET_LASER_SPEED)
         elif self.laser_type == "penetrate":
-            laser = PenetrateLaser(**params, damage=C.PENETRATE_LASER_DAMAGE, speed=C.PENETRATE_LASER_SPEED)
+            laser = PenetrateLaser(**params, 
+                damage=C.PENETRATE_LASER_DAMAGE, 
+                speed=C.PENETRATE_LASER_SPEED, 
+                max_scale=scale
+            )
         else: 
             laser = HormingLaser(**params, damage=C.HORMING_LASER_SPEED, speed=C.HORMING_LASER_DAMAGE)
         laser.set_position(x, self.top)

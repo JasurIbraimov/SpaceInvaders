@@ -59,10 +59,37 @@ class Game(arcade.Window):
             font_name="kenvector future"
         )
 
+        self.score_text = arcade.Text(
+            "SCORE: 0",
+            self.width - 170, 
+            self.height-150, 
+            font_size=18,
+            font_name="kenvector future"
+        )
+
+        self.level_text = arcade.Text(
+            "LEVEL: 1",
+            50, 
+            self.height - 50, 
+            font_size=18,
+            font_name="kenvector future"
+        )
+        self.game_over_text = arcade.Text( 
+            "GAME OVER",
+            self.width/4, 
+            self.height/2, 
+            font_size=75,
+            font_name="kenvector future"
+        )
         # Start Timer
         self.start_timer = time()
         self.start_countdown = 3
         self.start = False
+        
+        # Game Over
+        self.game_over = False 
+        # Player score
+        self.score = 0
         
         # SpriteLists 
         self.player_ships = arcade.SpriteList()
@@ -82,10 +109,10 @@ class Game(arcade.Window):
 
         # Buttons
         self.choose_button = Button("CHOOSE", "assets/UI/button_blue.png", self.width/2, 100)
-        self.pause_button = Button("MENU", "assets/UI/button_blue.png", self.width - 50, self.height - 80)
+        self.pause_button = Button("MENU", "assets/UI/button_blue.png", self.width - 50, 100)
         self.resume_button = Button("RESUME", "assets/UI/button_blue.png", self.width/2, self.height/2+50)
         self.quit_button = Button("QUIT", "assets/UI/button_blue.png", self.width/2, self.height/2)
-        
+        self.restart_button = Button("RESTART", "assets/UI/button_blue.png", self.width/2, self.height/2 - 100)
 
         self.level = 1
         
@@ -110,9 +137,8 @@ class Game(arcade.Window):
         """
         for i in range(3):
             live = arcade.Sprite(f"assets/Lives/player{self.main_player_ship.shape}_{self.main_player_ship.shape_color}.png", 1)
-            live.set_position(200 + 60 * i, self.height - 50)
+            live.set_position(self.width - 150 + 60 * i, self.height-100)
             self.lives.append(live) 
-
 
     def setup_shapes(self):
         """
@@ -130,7 +156,7 @@ class Game(arcade.Window):
         """
         for i in range(enemy_count):
             enemy = Enemy(hp, self)
-            enemy.change_y = -enemy_speed
+            enemy.change_y = enemy_speed
             enemy.center_y = self.height + 100 * i
             self.enemies.append(enemy)
 
@@ -151,17 +177,16 @@ class Game(arcade.Window):
         """
             Method that creates levels
         """
-
         if self.level == 1: 
             self.setup_common_enemies(1, 25)
         elif self.level == 2:
             self.setup_common_enemies(2, 25, ENEMY_SPEED + 0.2)
         elif self.level == 3:
-            self.setup_shooting_enemies(3, 25, "ricochet")
+            self.setup_shooting_enemies(3, 25, "common")
         elif self.level == 4: 
-            self.setup_shooting_enemies(4, 30, "horming")
+            self.setup_shooting_enemies(4, 30, "ricochet")
         elif self.level == 5:
-            self.setup_shooting_enemies(5, 40, ("horming", "ricochet"), ENEMY_SHOOTING_TIMER - 0.5)
+            self.setup_shooting_enemies(5, 40, "horming", ENEMY_SHOOTING_TIMER - 0.5)
         elif self.level == 6:
             self.setup_shooting_enemies( 6, 40, ("horming", "ricochet", "common"), ENEMY_SHOOTING_TIMER - 1)
         elif self.level == 7: 
@@ -173,6 +198,7 @@ class Game(arcade.Window):
         self.start_countdown = 3
         self.start_timer_text.text = self.start_countdown
         self.start_timer = time()
+    
     def on_draw(self):
         # Drawing background of the game
         arcade.draw_texture_rectangle(
@@ -189,7 +215,7 @@ class Game(arcade.Window):
             self.planet.height,
             self.planet
         )
-        
+       
         if self.menu: # in menu mode
             self.choose_text.draw()
             self.color_text.draw()
@@ -204,6 +230,18 @@ class Game(arcade.Window):
             self.explosions.draw()
             self.player_lasers.draw()
             self.lives.draw()
+             # Player shop 
+            arcade.draw_rectangle_filled(
+                self.width - 75, 
+                self.height/2, 
+                100,  
+                500,
+                arcade.color.DARK_BLUE_GRAY
+            )
+            # Player score 
+            self.score_text.draw()
+            # Level 
+            self.level_text.draw()
 
         # Drawing pause button
         self.pause_button.draw()
@@ -218,14 +256,16 @@ class Game(arcade.Window):
             )
             self.resume_button.draw()
             self.quit_button.draw()
-        
+        if self.game_over:
+            self.game_over_text.draw()
+            self.restart_button.draw()
         if not self.pause and not self.menu and not self.start:
             self.start_timer_text.draw()
         # Drawing cursor
         self.cursor.draw()
 
     def update(self, delta_time):
-        if self.menu or self.pause: 
+        if self.menu or self.pause or self.game_over: 
             return 
 
         if not self.start:
@@ -240,7 +280,12 @@ class Game(arcade.Window):
         self.enemies.update()
         self.enemies_lasers.update()
         self.explosions.update_animation()
-        
+
+        if len(self.enemies) == 0:
+            self.level = self.level + 1
+            self.setup_levels()
+            self.level_text.text = f"LEVEL: {self.level}"
+            return
         
         # if any of enemies are destoyed create an explosion after them
         for enemy in self.enemies:
@@ -248,25 +293,29 @@ class Game(arcade.Window):
                 explosion =  Explosion(enemy.center_x, enemy.center_y)
                 self.explosions.append(explosion)
                 enemy.kill()
-        if len(self.enemies) == 0:
-            self.level = self.level + 1
-            self.setup_levels()
+                # Increase score by 1 and change score text on the screen
+                self.score = self.score + 1
+                self.score_text.text = f"SCORE: {self.score}"
 
         # Check if player lasers collide with enemy lasers 
-        for laser in self.player_lasers:
-            hits = arcade.check_for_collision_with_list(laser, self.enemies_lasers)
+        for laser in self.enemies_lasers:
+            hits = arcade.check_for_collision_with_list(laser, self.player_lasers)
             if len(hits) > 0:
                 laser.kill()
                 for l in hits:
                     l.kill()
-                    
+        if self.main_player_ship.hp == 0:
+            self.start = False 
+            self.game_over = True 
 
+            
+                    
     def on_mouse_motion(self, x, y, dx, dy):
         # To make cursor move with user mouse
         self.cursor.set_position(x, y)  
 
         # Move user's ship to ther cursor position x  
-        if not self.menu and not self.pause and self.start:
+        if not self.menu and not self.pause and self.start and x < self.width-200:
             self.main_player_ship.center_x = x
         
         # If user have more than 1 ship
@@ -278,13 +327,24 @@ class Game(arcade.Window):
                     center_x = self.main_player_ship.center_x + 100 * (i // 2 + 1)
                 self.player_ships[i].center_x = center_x
     
-    
     def on_mouse_press(self, x, y, button, modifiers):
         if button == arcade.MOUSE_BUTTON_LEFT: 
             # Handle click on Pause Button
             if check_item_clicked(x, y, self.pause_button):
                 self.pause = True 
-
+            if check_item_clicked(x, y, self.restart_button) and self.game_over:
+                self.game_over = False
+                self.menu = True
+                self.setup_lives()
+                self.main_player_ship.hp = 3
+                self.enemies.clear()
+                self.player_lasers.clear()
+                self.enemies_lasers.clear()
+                self.level = 1
+                self.level_text.text = f"LEVEL: {self.level}"
+                self.score = 0
+                self.score_text.text = f"SCORE: {self.score}"
+                self.setup_levels()
 
             if self.pause:
                 # Handle click on Resume Button
@@ -379,7 +439,7 @@ class Game(arcade.Window):
             for player in self.player_ships:
                 player.laser_type = "horming"
         if symbol == arcade.key.A:
-            player = Player(1, self.main_player_ship.shape, self.main_player_ship.shape_color)
+            player = Player(1, self, self.main_player_ship.shape, self.main_player_ship.shape_color)
             player.center_x = self.main_player_ship.center_x
             self.player_ships.append(player)
         
