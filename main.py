@@ -341,6 +341,11 @@ class Game(arcade.Window):
                 # Increase score by 1 and change score text on the screen
                 self.score = self.score + 1
                 self.score_text.text = f"SCORE: {self.score}"
+                # Open power up is player has enough money
+                for power in self.power_ups:
+                    if self.score >= power.cost and not power.opened:
+                        power.opened = True 
+                        power.color = arcade.color.WHITE
 
         # Check if player lasers collide with enemy lasers 
         for laser in self.enemies_lasers:
