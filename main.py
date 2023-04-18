@@ -8,6 +8,7 @@ from button import Button
 from player import Player
 from enemy import ShootingEnemy, Enemy
 from utils import *
+from powerup import PowerUp
 from explosion import Explosion
 
 class Game(arcade.Window):
@@ -130,7 +131,46 @@ class Game(arcade.Window):
         self.colors.append(blue)
         self.colors.append(green)
         self.colors.append(red)
-
+    
+    def setup_powerups(self):
+        power_up = PowerUp(
+            f"assets/Power-ups/double_laser_{self.main_player_ship.shape_color}.png", 
+            10, "double_laser", self.width - 75, 
+            self.height - 225
+        )
+        power_up_2 = PowerUp(
+            f"assets/Power-ups/triple_laser_{self.main_player_ship.shape_color}.png", 
+            20, "triple_laser", self.width - 75, 
+            self.height - 300
+        )
+        power_up_3 = PowerUp(
+            f"assets/Power-ups/{self.main_player_ship.shape_color}_ricochet.png", 
+            25, "ricochet", self.width - 75, 
+            self.height - 375
+        )
+        power_up_4 = PowerUp(
+            f"assets/Power-ups/{self.main_player_ship.shape_color}_penetrate.png", 
+            30, "penetrate", self.width - 75, 
+            self.height - 450
+        )
+        power_up_5 = PowerUp(
+            f"assets/Power-ups/{self.main_player_ship.shape_color}_horming.png", 
+            30, "horming", self.width - 75, 
+            self.height - 525
+        )
+        power_up_6 = PowerUp(
+            f"assets/Power-ups/{self.main_player_ship.shape}_{self.main_player_ship.shape_color}_add.png", 
+            30, "add", self.width - 75, 
+            self.height - 600
+        )
+        self.power_ups.append(power_up)
+        self.power_ups.append(power_up_2)
+        self.power_ups.append(power_up_3)
+        self.power_ups.append(power_up_4)
+        self.power_ups.append(power_up_5)
+        self.power_ups.append(power_up_6)
+        
+        
     def setup_lives(self):
         """
             Method that creates lives of player, according to shape and color
@@ -238,6 +278,11 @@ class Game(arcade.Window):
                 500,
                 arcade.color.DARK_BLUE_GRAY
             )
+
+            # Power ups
+            for power_up in self.power_ups:
+                power_up.draw()
+
             # Player score 
             self.score_text.draw()
             # Level 
@@ -405,9 +450,10 @@ class Game(arcade.Window):
                     # Creating player according to user choice
                     self.main_player_ship.change_shape()
                     self.main_player_ship.center_x = self.width/2
+                    self.setup_powerups()
                     self.setup_lives()
             else: 
-                if self.start:
+                if self.start and x < self.width - 200:
                     for player in self.player_ships:
                         player.shooting()
         
