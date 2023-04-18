@@ -34,7 +34,7 @@ class CommonLaser(Laser):
     """
         Common Laser Class
     """
-    def __init__(self, color, enemies, speed, damage, boundary_top):
+    def __init__(self, color, enemies, damage, boundary_top, speed):
         super().__init__(color, "common", speed, damage, boundary_top, enemies)
 
     def update(self):
@@ -47,7 +47,7 @@ class RicochetLaser(Laser):
     """
         Ricochet Laser Class
     """
-    def __init__(self, color, enemies, speed, damage, boundary_top):
+    def __init__(self, color, enemies, damage, boundary_top, speed):
         super().__init__(color, "ricochet", speed, damage, boundary_top, enemies)
         self.ricochet_times = 0
     
@@ -70,7 +70,7 @@ class PenetrateLaser(Laser):
     """
         Penetrate Laser Class
     """
-    def __init__(self, color, enemies, speed, damage, max_scale, boundary_top):
+    def __init__(self, color, enemies, damage, max_scale, boundary_top, speed):
         super().__init__(color, "penetrate", speed, damage, boundary_top, enemies)
         self.change_scale = C.PENETRATE_PULSE_SPEED
         self.max_scale = max_scale
@@ -89,7 +89,7 @@ class PenetrateLaser(Laser):
 
         
 class HormingLaser(Laser):
-    def __init__(self, color, enemies, speed, damage, boundary_top):
+    def __init__(self, color, enemies, damage, boundary_top, speed):
         super().__init__(color, "horming", speed, damage, boundary_top, enemies)
         self.speed = speed
         self.live_time = time()

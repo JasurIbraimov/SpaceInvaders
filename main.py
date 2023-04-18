@@ -1,11 +1,12 @@
 import arcade 
 import random
+from time import time
 from constants import * 
 from color import Color
 from shape import Shape
 from button import Button
 from player import Player
-from enemy import ShootingEnemy
+from enemy import ShootingEnemy, Enemy
 from utils import *
 from explosion import Explosion
 
@@ -16,11 +17,11 @@ class Game(arcade.Window):
   
         # Loading Background textures 
         self.bg = arcade.load_texture("assets/Backgrounds/black.png") 
-
+        self.planet = arcade.load_texture("assets/Backgrounds/planet.png")
         
         self.menu = True
         self.pause = False
-
+    
         # Loading Custom Font
         arcade.load_font("assets/Font/kenvector_future.ttf")
         self.cursor = arcade.Sprite("assets/UI/cursor.png")
@@ -50,11 +51,22 @@ class Game(arcade.Window):
             font_name="kenvector future"
         )
 
+        self.start_timer_text = arcade.Text(
+            "3",
+            self.width/2, 
+            self.height/2, 
+            font_size=75,
+            font_name="kenvector future"
+        )
 
-
+        # Start Timer
+        self.start_timer = time()
+        self.start_countdown = 3
+        self.start = False
+        
         # SpriteLists 
         self.player_ships = arcade.SpriteList()
-        self.main_player_ship = Player(3) 
+        self.main_player_ship = Player(3, self) 
         self.player_ships.append(self.main_player_ship)
         
         self.colors = arcade.SpriteList()
@@ -64,15 +76,18 @@ class Game(arcade.Window):
         self.enemies = arcade.SpriteList()
         self.enemies_lasers = arcade.SpriteList()
         self.explosions = arcade.SpriteList()
+        self.power_ups = arcade.SpriteList()
         self.setup_colors()
         self.setup_shapes()
-        self.setup_enemies()
 
         # Buttons
         self.choose_button = Button("CHOOSE", "assets/UI/button_blue.png", self.width/2, 100)
         self.pause_button = Button("MENU", "assets/UI/button_blue.png", self.width - 50, self.height - 80)
         self.resume_button = Button("RESUME", "assets/UI/button_blue.png", self.width/2, self.height/2+50)
         self.quit_button = Button("QUIT", "assets/UI/button_blue.png", self.width/2, self.height/2)
+        
+
+        self.level = 1
         
     def setup_colors(self):
         """
@@ -109,17 +124,55 @@ class Game(arcade.Window):
             self.shapes.append(shape)
         self.shapes[0].scale = SHIP_CHOSEN_SCALE
 
-    def setup_enemies(self):
+    def setup_common_enemies(self, hp, enemy_count, enemy_speed=ENEMY_SPEED):
         """
-            Method that creates enemies based on the level
+            Method that creates common enemies 
         """
-        for i in range(50):
-            enemy = ShootingEnemy(self)
-            enemy.set_position(random.randint(0, self.width), self.height + 100 * i)
+        for i in range(enemy_count):
+            enemy = Enemy(hp, self)
+            enemy.change_y = -enemy_speed
+            enemy.center_y = self.height + 100 * i
             self.enemies.append(enemy)
 
+    def setup_shooting_enemies(self, hp, enemy_count, laser_type="common", shooting_speed=ENEMY_SHOOTING_TIMER):
+        """
+            Method that creates shooting enemies 
+        """
+        for i in range(enemy_count):
+            if isinstance(laser_type, tuple): 
+                laser = random.choice(laser_type)
+            else:
+                laser = laser_type
+            enemy = ShootingEnemy(hp, self, laser, shooting_speed)
+            enemy.center_y = self.height + 100 * i
+            self.enemies.append(enemy)
 
+    def setup_levels(self):
+        """
+            Method that creates levels
+        """
 
+        if self.level == 1: 
+            self.setup_common_enemies(1, 25)
+        elif self.level == 2:
+            self.setup_common_enemies(2, 25, ENEMY_SPEED + 0.2)
+        elif self.level == 3:
+            self.setup_shooting_enemies(3, 25, "ricochet")
+        elif self.level == 4: 
+            self.setup_shooting_enemies(4, 30, "horming")
+        elif self.level == 5:
+            self.setup_shooting_enemies(5, 40, ("horming", "ricochet"), ENEMY_SHOOTING_TIMER - 0.5)
+        elif self.level == 6:
+            self.setup_shooting_enemies( 6, 40, ("horming", "ricochet", "common"), ENEMY_SHOOTING_TIMER - 1)
+        elif self.level == 7: 
+            self.setup_common_enemies(8, 40, ENEMY_SPEED + 0.5)
+            self.setup_shooting_enemies(8, 10, ("horming", "ricochet", "common"), ENEMY_SHOOTING_TIMER - 1.5)
+
+    def setup_countdown_timer(self):
+        self.start = False
+        self.start_countdown = 3
+        self.start_timer_text.text = self.start_countdown
+        self.start_timer = time()
     def on_draw(self):
         # Drawing background of the game
         arcade.draw_texture_rectangle(
@@ -129,6 +182,14 @@ class Game(arcade.Window):
             self.height,
             self.bg
         )
+        arcade.draw_texture_rectangle(
+            self.width/2, 
+            -self.height/3, 
+            self.planet.width,  
+            self.planet.height,
+            self.planet
+        )
+        
         if self.menu: # in menu mode
             self.choose_text.draw()
             self.color_text.draw()
@@ -157,22 +218,41 @@ class Game(arcade.Window):
             )
             self.resume_button.draw()
             self.quit_button.draw()
+        
+        if not self.pause and not self.menu and not self.start:
+            self.start_timer_text.draw()
         # Drawing cursor
         self.cursor.draw()
 
     def update(self, delta_time):
         if self.menu or self.pause: 
             return 
+
+        if not self.start:
+            if time() - self.start_timer > 1 :
+                self.start_countdown = self.start_countdown - 1
+                self.start_timer = time()
+                self.start_timer_text.text = self.start_countdown
+            if self.start_countdown == 0:
+                self.start = True
+            return
         self.player_lasers.update()
         self.enemies.update()
         self.enemies_lasers.update()
         self.explosions.update_animation()
         
+        
+        # if any of enemies are destoyed create an explosion after them
         for enemy in self.enemies:
             if enemy.hp <= 0:
                 explosion =  Explosion(enemy.center_x, enemy.center_y)
                 self.explosions.append(explosion)
                 enemy.kill()
+        if len(self.enemies) == 0:
+            self.level = self.level + 1
+            self.setup_levels()
+
+        # Check if player lasers collide with enemy lasers 
         for laser in self.player_lasers:
             hits = arcade.check_for_collision_with_list(laser, self.enemies_lasers)
             if len(hits) > 0:
@@ -183,9 +263,13 @@ class Game(arcade.Window):
 
     def on_mouse_motion(self, x, y, dx, dy):
         # To make cursor move with user mouse
-        self.cursor.set_position(x, y)    
-        if not self.menu and not self.pause:
+        self.cursor.set_position(x, y)  
+
+        # Move user's ship to ther cursor position x  
+        if not self.menu and not self.pause and self.start:
             self.main_player_ship.center_x = x
+        
+        # If user have more than 1 ship
         if len(self.player_ships) > 1:
             for i in range(1, len(self.player_ships)):
                 if i % 2 == 0:  # for even i values, make center_x negative
@@ -193,16 +277,20 @@ class Game(arcade.Window):
                 else:  # for odd i values, make center_x positive
                     center_x = self.main_player_ship.center_x + 100 * (i // 2 + 1)
                 self.player_ships[i].center_x = center_x
+    
+    
     def on_mouse_press(self, x, y, button, modifiers):
         if button == arcade.MOUSE_BUTTON_LEFT: 
-                # Handle click on Pause Button
+            # Handle click on Pause Button
             if check_item_clicked(x, y, self.pause_button):
                 self.pause = True 
+
 
             if self.pause:
                 # Handle click on Resume Button
                 if check_item_clicked(x, y, self.resume_button):
                     self.pause = False 
+                    self.setup_countdown_timer()
                 
                 # Handle click on Quit Button
                 if check_item_clicked(x, y, self.quit_button):
@@ -252,17 +340,23 @@ class Game(arcade.Window):
                 # Handle clicking to "Choose button"
                 if check_item_clicked(x, y, self.choose_button):
                     self.menu = False # Turn off menu mode
-
+                    self.setup_levels()
+                    self.start_timer = time()
                     # Creating player according to user choice
                     self.main_player_ship.change_shape()
+                    self.main_player_ship.center_x = self.width/2
                     self.setup_lives()
             else: 
-                for player in self.player_ships:
-                    player.shooting(self)
+                if self.start:
+                    for player in self.player_ships:
+                        player.shooting()
         
     def on_key_press(self, symbol: int, modifiers: int):
         if symbol == arcade.key.ESCAPE:
             self.pause = not self.pause
+            if not self.pause:
+                self.setup_countdown_timer()
+
         if symbol == arcade.key.NUM_1:
             for player in self.player_ships:
                 player.shoot_mode = 1
