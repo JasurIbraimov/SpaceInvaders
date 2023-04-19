@@ -3,6 +3,7 @@ from random import randint, choice
 from time import time
 from laser import CommonLaser, RicochetLaser, HormingLaser
 import constants as C
+from explosion import Explosion
 
 class Enemy(Sprite):
     def __init__(self, hp, window, shape=1):
@@ -23,6 +24,11 @@ class Enemy(Sprite):
         self.center_y = self.center_y - self.change_y
         if self.top <= 0:
             self.kill()
+    
+    def create_explosion(self):
+        explosion =  Explosion(self.center_x, self.center_y)
+        self.window.explosions.append(explosion)
+        self.kill()
 
 
 class ShootingEnemy(Enemy):
@@ -50,6 +56,7 @@ class ShootingEnemy(Enemy):
         """
             Method that creates laser for enemy
         """
+        self.window.enemy_laser_sound.play(volume=0.1)
         params = (self.shape_color, self.window.player_ships, 1, self.window.height)
         if self.laser_type == "common": 
             laser = CommonLaser(*params, -C.COMMON_LASER_SPEED)

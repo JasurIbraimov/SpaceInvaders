@@ -7,7 +7,7 @@ class Player(AnimatedSprite):
     def __init__(self, hp, window, shape="Ship1", color="blue"):
         super().__init__(f"assets/Player/player{shape}_{color}.png", scale=0.8)
         self.center_y = 150
-        self.shoot_mode = 3
+        self.shoot_mode = 1
         self.shape = shape 
         self.shape_color = color
         self.hp = hp
@@ -15,6 +15,7 @@ class Player(AnimatedSprite):
         self.window = window
 
     def change_hp(self, damage):
+        self.window.lose_live_sound.play()
         self.hp = self.hp - damage
         self.window.lives.pop()
  
