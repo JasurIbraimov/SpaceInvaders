@@ -106,19 +106,20 @@ class HormingLaser(Laser):
         if self.check_collision_with_enemies() or self.check_boundary():
             self.kill()
         self.center_x = self.center_x + self.change_x
+        if len(self.enemies) > 0:
         # Calculate the angle between the laser and the player
-        player_x, player_y = self.enemies[0].position
-        laser_x, laser_y = self.position
-        angle = math.atan2(player_y - laser_y, player_x - laser_x)
+            player_x, player_y = self.enemies[0].position
+            laser_x, laser_y = self.position
+            angle = math.atan2(player_y - laser_y, player_x - laser_x)
 
-        # Turn the laser towards the player
-        self.angle = math.degrees(angle) - 90
-        if self.angle < 0:
-            self.angle += 360
+            # Turn the laser towards the player
+            self.angle = math.degrees(angle) - 90
+            if self.angle < 0:
+                self.angle += 360
 
-        # Move the laser forward
-        self.change_x = math.cos(angle) * self.speed
-        self.change_y = math.sin(angle) * self.speed
+            # Move the laser forward
+            self.change_x = math.cos(angle) * self.speed
+            self.change_y = math.sin(angle) * self.speed
 
         if time() - self.live_time >= 5:
             self.kill()
