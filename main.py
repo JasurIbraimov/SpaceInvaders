@@ -74,8 +74,8 @@ class Game(arcade.Window):
             font_size=18,
             font_name="kenvector future"
         )
-        self.game_over_text = arcade.Text( 
-            "GAME OVER",
+        self.end_game_text = arcade.Text( 
+            "",
             self.width/4, 
             self.height/2, 
             font_size=75,
@@ -96,6 +96,8 @@ class Game(arcade.Window):
         
         # Game Over
         self.game_over = False 
+        # Win
+        self.win = False
         # Player score
         self.score = 0
         # Player record
@@ -126,7 +128,7 @@ class Game(arcade.Window):
         self.resume_button = Button("RESUME", "assets/UI/button_blue.png", self.width/2, self.height/2+50)
         self.quit_button = Button("QUIT", "assets/UI/button_blue.png", self.width/2, self.height/2)
         self.restart_button = Button("RESTART", "assets/UI/button_blue.png", self.width/2, self.height/2 - 100)
-
+        
         # Sounds
         self.explosion_sound = arcade.Sound("assets/Sounds/lowFrequency_explosion_000.ogg")
         self.power_up_sound = arcade.Sound("assets/Sounds/power-up.ogg")
@@ -251,8 +253,12 @@ class Game(arcade.Window):
         elif self.level == 6:
             self.setup_shooting_enemies( 6, 40, ("horming", "ricochet", "common"), ENEMY_SHOOTING_TIMER - 1)
         elif self.level == 7: 
-            self.setup_common_enemies(8, 40, ENEMY_SPEED + 0.5)
+            self.setup_common_enemies(8, 30, ENEMY_SPEED + 0.2)
             self.setup_shooting_enemies(8, 10, ("horming", "ricochet", "common"), ENEMY_SHOOTING_TIMER - 1.5)
+        else: 
+            self.win = True
+            self.end_game_text.text = "YOU WIN!"
+            self.end_game_text.x = self.width / 3
 
     def setup_countdown_timer(self):
         self.start = False
@@ -316,8 +322,8 @@ class Game(arcade.Window):
         self.pause_button.draw()
 
 
-        if self.game_over:
-            self.game_over_text.draw()
+        if self.game_over or self.win:
+            self.end_game_text.draw()
             self.restart_button.draw()
         if self.pause:
             arcade.draw_rectangle_filled(
@@ -337,7 +343,7 @@ class Game(arcade.Window):
 
 
     def update(self, delta_time):
-        if self.menu or self.pause or self.game_over: 
+        if self.menu or self.pause or self.game_over or self.win: 
             return 
 
         if not self.start:
@@ -407,15 +413,19 @@ class Game(arcade.Window):
         if self.main_player_ship.hp == 0:
             self.start = False 
             self.game_over = True 
+            self.end_game_text.x = self.width / 3
+            self.end_game_text.text = "GAME OVER"
 
             
                     
     def on_mouse_motion(self, x, y, dx, dy):
-        # To make cursor move with user mouse
         self.cursor.set_position(x, y)  
+        if self.win or self.game_over or self.pause or self.menu or not self.start: 
+            return 
+        # To make cursor move with user mouse
 
         # Move user's ship to ther cursor position x  
-        if not self.menu and not self.pause and self.start and x < self.width-200:
+        if x < self.width-200:
             self.main_player_ship.center_x = x
         
         # If user have more than 1 ship
@@ -433,7 +443,6 @@ class Game(arcade.Window):
             if check_item_clicked(x, y, self.pause_button):
                 self.pause = True 
                 self.select_sound.play(volume=0.1)
-
 
             # Handle click on Restart Button
             elif check_item_clicked(x, y, self.restart_button) and self.game_over:
@@ -509,7 +518,8 @@ class Game(arcade.Window):
                     arcade.stop_sound(self.player)
                     self.player = self.game_sound.play(volume=0.1, loop=True)
                     self.setup_lives()
-            else: 
+                    self.level = 7
+            elif not self.game_over and not self.win: 
                 if self.start and x < self.width - 200:
                     self.laser_sound.play(volume=0.1)
                     for player in self.player_ships:
