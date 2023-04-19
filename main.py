@@ -523,7 +523,6 @@ class Game(arcade.Window):
                     arcade.stop_sound(self.player)
                     self.player = self.game_sound.play(volume=0.1, loop=True)
                     self.setup_lives()
-                    self.level = 7
             elif not self.game_over and not self.win:
                 if self.start and x < self.width - 200:
                     self.laser_sound.play(volume=0.1)
