@@ -24,6 +24,7 @@ class Enemy(Sprite):
     def update(self):
         self.center_y = self.center_y - self.change_y
         if self.top <= 0:
+            self.window.set_game_over()
             self.kill()
 
     def create_explosion(self):

@@ -259,7 +259,6 @@ class Game(arcade.Window):
             self.setup_shooting_enemies(8, 10, ("horming", "ricochet", "common"), ENEMY_SHOOTING_TIMER - 1.5)
         else:
             self.win = True
-            self.start = False
             self.end_game_text.text = "YOU WIN!"
             self.end_game_text.x = self.width / 3
 
@@ -421,10 +420,7 @@ class Game(arcade.Window):
                     player_laser.kill()
 
         if self.main_player_ship.hp == 0:
-            self.start = False
-            self.game_over = True
-            self.end_game_text.x = self.width / 4
-            self.end_game_text.text = "GAME OVER"
+            self.set_game_over()
 
     def on_mouse_motion(self, x, y, dx, dy):
         self.cursor.set_position(x, y)
@@ -591,6 +587,10 @@ class Game(arcade.Window):
         player.shoot_mode = self.main_player_ship.shoot_mode
         self.player_ships.append(player)
 
+    def set_game_over(self):
+        self.game_over = True
+        self.end_game_text.x = self.width / 4
+        self.end_game_text.text = "GAME OVER"
 
 window = Game(SCREEN_TITLE)
 arcade.run()
