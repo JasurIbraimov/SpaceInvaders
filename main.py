@@ -305,7 +305,7 @@ class Game(arcade.Window):
                 self.width - 75,
                 self.height / 2,
                 100,
-                500,
+                600,
                 arcade.color.DARK_BLUE_GRAY
             )
 
